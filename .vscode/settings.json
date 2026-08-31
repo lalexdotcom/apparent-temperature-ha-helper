@@ -1,0 +1,46 @@
+{
+	"js/ts.tsserver.experimental.enableProjectDiagnostics": true,
+	"js/ts.preferences.useAliasesForRenames": true,
+	"js/ts.updateImportsOnFileMove.enabled": "always",
+	"editor.formatOnSave": true,
+	// Declared per language rather than as `editor.defaultFormatter`: Biome only
+	// handles the languages below, and a global default makes every save of a
+	// Markdown, YAML or shell file raise "configured as formatter but it cannot
+	// format". With no default, those files simply keep whatever formatter their
+	// own extension provides, or none.
+	"[javascript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[javascriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[typescriptreact]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[json]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[jsonc]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[css]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"[graphql]": {
+		"editor.defaultFormatter": "biomejs.biome"
+	},
+	"files.associations": {
+		"*.css": "css"
+	},
+	"files.watcherExclude": {
+		"**/dist/**": true,
+		"**/node_modules/**": true
+	},
+	"search.exclude": {
+		"**/dist": true,
+		"**/node_modules": true
+	}
+}

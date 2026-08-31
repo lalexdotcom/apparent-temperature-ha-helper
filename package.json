@@ -1,0 +1,17 @@
+{
+    "name": "claude-scaffold",
+    "version": "0.0.1",
+    "description": "To be replaced by the description of the project",
+    "author": {
+        "name": "Alexandre LEGOUT",
+        "url": "https://github.com/lalexdotcom"
+    },
+    "license": "MIT",
+    "devDependencies": {
+        "@biomejs/biome": "^2.5.11",
+        "playwright": "^1.62.1",
+        "tsx": "^4.23.13",
+        "typescript": "^7.0.2"
+    },
+    "dependencies": {}
+}
