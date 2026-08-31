@@ -56,6 +56,16 @@ SECONDARY and must not touch code files when a Serena equivalent exists.
   tool for this? If yes, switch — every time, not once per session.
 - Subagents: every subagent prompt that touches code MUST carry this same rule.
 
+## Memory
+
+Serena owns memory. `write_memory` / `read_memory` / `list_memories` /
+`delete_memory` are the only store: their files live in `.serena/memories/`,
+they are versioned with the project, and they are what the next session reads.
+
+Do not write to Claude Code's own file-based memory. Its `MEMORY.md` holds a
+single entry pointing here and nothing else — a fact recorded in two places
+drifts, and the copy Serena cannot see is the one that goes stale.
+
 ## Onboarding — First Run
 
 When starting on an unknown or fresh codebase, run a codebase tour before any
