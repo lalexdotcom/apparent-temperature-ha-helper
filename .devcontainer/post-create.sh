@@ -48,6 +48,11 @@ if [ "$(npm pkg get packageManager)" = "{}" ]; then
 	npm pkg set "packageManager=pnpm@$(pnpm --version)"
 fi
 
+# The Python side of the same deal: creates .venv from pyproject.toml and the
+# `dev` dependency group. `--frozen` would need a committed uv.lock; there is
+# one from the first sync onwards, and uv refreshes it here when it drifts.
+uv sync
+
 pnpm install
 
 # Playwright browsers + OS deps, for browser-mode unit tests and for driving a

@@ -23,13 +23,22 @@
 		"source=ai-tools-config-${devcontainerId},target=/ai-tools,type=volume"
 	],
 	"containerEnv": {
-		// uv symlinks tool executables into $HOME/.local/bin, which is not on the
-		// image's PATH. `serena-hooks`, called by name from the four hooks in
-		// .claude/settings.json, lives there.
-		"PATH": "/home/node/.local/bin:${containerEnv:PATH}",
 		"CLAUDE_CONFIG_DIR": "/ai-tools/.claude",
 		"MEMPALACE_PALACE_PATH": "/ai-tools/.mempalace",
 		"SERENA_HOME": "/ai-tools/.serena"
+	},
+	// uv symlinks tool executables into $HOME/.local/bin, which is not on the
+	// image's PATH. `serena-hooks`, called by name from the four hooks in
+	// .claude/settings.json, lives there.
+	//
+	// This has to be `remoteEnv`, not `containerEnv`: `${containerEnv:PATH}` is
+	// only substituted in `remoteEnv`. Anywhere else it reaches `docker run` as
+	// a literal, PATH stops resolving anything, and the entrypoint dies on
+	// `cat: not found`. remoteEnv covers what needs it here — VS Code and its
+	// sub-processes, so Claude Code and the hooks it spawns, plus terminals and
+	// the lifecycle commands.
+	"remoteEnv": {
+		"PATH": "/home/node/.local/bin:${containerEnv:PATH}"
 	},
 	"customizations": {
 		"vscode": {
@@ -37,6 +46,12 @@
 				"Anthropic.claude-code",
 				"mhutchie.git-graph",
 				"biomejs.biome",
+				// Pylance is the language server the Python extension expects; the Ruff
+				// extension ships its own binary, so linting works even before `uv sync`.
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-python.debugpy",
+				"charliermarsh.ruff",
 				"github.vscode-github-actions",
 				"bierner.github-markdown-preview",
 				"bierner.markdown-preview-github-styles",

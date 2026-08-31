@@ -32,6 +32,16 @@
 	"[graphql]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},
+	"[python]": {
+		"editor.defaultFormatter": "charliermarsh.ruff",
+		"editor.codeActionsOnSave": {
+			"source.organizeImports.ruff": "explicit"
+		}
+	},
+	// uv sync (post-create.sh) puts the interpreter here; without this VS Code
+	// picks the system python3 and Pylance resolves no project dependency.
+	"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+	"python.testing.pytestEnabled": true,
 	"files.associations": {
 		"*.css": "css"
 	},

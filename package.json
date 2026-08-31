@@ -13,5 +13,5 @@
         "tsx": "^4.23.13",
         "typescript": "^7.0.2"
     },
-    "dependencies": {}
+    "packageManager": "pnpm@10.28.2"
 }

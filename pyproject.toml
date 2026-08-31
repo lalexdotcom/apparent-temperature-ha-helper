@@ -1,0 +1,26 @@
+[project]
+name = "apparent-temperature-ha-helper"
+version = "0.0.1"
+description = "To be replaced by the description of the project"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Alexandre LEGOUT", email = "" }]
+# Home Assistant 2025.2+ requires 3.13; matching it keeps the integration
+# runnable on the same interpreter it will be deployed on.
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = ["ruff>=0.14", "pytest>=8"]
+
+[tool.ruff]
+# 100 rather than Home Assistant core's 88: this is a custom component, and the
+# repo's other formatter (biome) already uses 100.
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
