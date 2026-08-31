@@ -31,7 +31,7 @@ weather entity when its group yields nothing.
 | Groups | All three optional; sensor is `unavailable` when temperature cannot be resolved |
 | Statistics | `min`, `max`, `mean`, `median`, `last` |
 | Invalid members | Delegated to native `SensorGroup`, driven by `ignore_non_numeric` |
-| Native reuse | Headless `SensorGroup` instances, never added to `hass` |
+| Native reuse | Headless `SensorGroup` instances, never added to `hass`, pinned to canonical units |
 | Output | State as `device_class: temperature` in °C, raw index exposed as an attribute |
 | Localisation | `strings.json` as source, `en` and `fr` translations |
 | Entity id | Derived from the helper title, HA default behaviour |
@@ -90,6 +90,12 @@ name).
 | `humidity` | section, collapsed | `device_class: humidity` |
 | `wind_speed` | section, collapsed | `device_class: wind_speed` |
 
+The wind filter is `wind_speed`, not `speed`. Both device classes exist in
+current Home Assistant and neither is deprecated, but `speed` also accepts
+`UnitOfVolumetricFlux` — mm/h, in/d. A rain gauge picked by mistake would be a
+valid speed as far as `SpeedConverter` is concerned and would convert to km/h
+without complaint.
+
 Each section holds three fields:
 
 | Key | Selector | Default |
@@ -137,31 +143,46 @@ Weather entities are read from their state attributes: `temperature` with
 `temperature_unit`, `humidity` (always %), `wind_speed` with `wind_speed_unit`.
 The declared units are read, never assumed.
 
-Groups are native `SensorGroup` instances built through
-`homeassistant.components.group.sensor.async_create_preview_sensor(hass, name,
-config)`, which takes a validated config dict and is a more stable entry point
-than the constructor. They are **never** added to `hass`: no entity registry
-entry, nothing visible in the UI. The helper calls `async_update_group_state()`
-itself, then reads `available`, `native_value` and
-`native_unit_of_measurement`. This delegates availability, member filtering,
-unit conversion, `ignore_non_numeric` semantics and warning logs to Home
-Assistant, which is the point — the helper is ISO with the native behaviour by
-construction rather than by imitation.
+Groups are native `SensorGroup` instances
+(`homeassistant.components.group.sensor`), constructed directly so that
+`device_class` and `unit_of_measurement` can be imposed: `temperature` in °C,
+`humidity` in %, `wind_speed` in km/h. `_calculate_unit_of_measurement()` opens
+with `if unit_of_measurement: return unit_of_measurement`, so a configured unit
+wins outright; `_get_valid_units()` then sets `_can_convert = True` and every
+member is converted to the canonical unit **before** aggregation. The helper
+therefore never post-converts a group's result.
+
+That ordering is not cosmetic. `UnitOfSpeed.BEAUFORT` is convertible but not
+linearly — `SpeedConverter._beaufort_to_ms` is `0.836 · B^1.5` — so a group
+aggregating in Beaufort and converted afterwards would yield a wrong `mean`.
+Converting each member first removes the whole class of problem.
+
+The groups are **never** added to `hass`: no entity registry entry, nothing
+visible in the UI. Home Assistant does the same for config-flow previews in
+`async_create_preview_sensor()`, which builds a `SensorGroup` with
+`unique_id=None`; that function is not used here only because it hardcodes
+`None` for the device class and unit. The helper calls
+`async_update_group_state()` itself, then reads `available` and `native_value`.
+This delegates availability, member filtering, unit conversion,
+`ignore_non_numeric` semantics and warning logs to Home Assistant, which is the
+point — the helper is ISO with the native behaviour by construction rather than
+by imitation.
 
 `manifest.json` declares `"dependencies": ["group"]`, which is honest about the
 import; `group` ships in `default_config` anyway.
 
 ### `units.py` — normalisation
 
-`SensorGroup` aggregates in the unit of its first valid member. The helper then
-converts the aggregate once, to °C / % / km/h, using
+Groups already produce canonical values, so this module covers the one path
+that does not: the weather entity, whose `temperature_unit` and
+`wind_speed_unit` are read from its attributes and converted with
 `homeassistant.util.unit_conversion.TemperatureConverter` and `SpeedConverter`
-— never hand-written constants.
+— never hand-written constants. It also holds the km/h → m/s step Steadman
+needs.
 
-Converting after aggregating is exact here: `min`, `max`, `mean`, `median` and
-`last` all commute with an affine conversion. This is precisely why `range` and
-`sum` were excluded — a range converted with the °F→°C offset would be wrong —
-alongside the fact that neither is meaningful as an input to a comfort formula.
+`range` and `sum` were excluded from the statistics for a second reason beyond
+being meaningless as comfort-formula inputs: neither survives a unit change
+cleanly. A range converted with the °F→°C offset is simply wrong.
 
 ## Entity
 
@@ -202,9 +223,11 @@ that no mode reads as more universal than the other in any language.
 - The config flow and options flow are tested for round-tripping a full
   configuration and an empty one.
 - One dedicated test pins the Home Assistant internals the helper depends on
-  (`async_create_preview_sensor`, `async_update_group_state`, the
-  `available` / `native_value` / `native_unit_of_measurement` properties) so a
-  core refactor fails loudly here rather than silently in production.
+  (the `SensorGroup` constructor signature, `async_update_group_state`, the
+  `available` and `native_value` properties, and the fact that a configured
+  `unit_of_measurement` wins over the members' own units) so a core refactor
+  fails loudly here rather than silently in production. A Beaufort member in a
+  km/h group is part of that test.
 
 ## Packaging
 
@@ -218,6 +241,10 @@ that no mode reads as more universal than the other in any language.
 
 The helper depends on `homeassistant.components.group.sensor`, which is Home
 Assistant internal code with no API stability guarantee. The dependency is
-confined to `sources.py` and pinned by a dedicated test. Should core break it,
+confined to `sources.py` and pinned by a dedicated test. Constructing
+`SensorGroup` directly rather than through `async_create_preview_sensor()`
+widens that exposure slightly — a constructor signature is easier to change
+than a config-dict entry point — which is the price of imposing the canonical
+units, and it is the same object either way. Should core break it,
 the fallback is to import the module-level `calc_*` functions and reimplement
 the ~80 lines of filtering and unit handling from `async_update_group_state()`.
