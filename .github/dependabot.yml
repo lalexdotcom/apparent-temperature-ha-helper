@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Actions only. Two of the pins here are deliberate and will never move on
+  # their own: `softprops/action-gh-release` is fixed to a commit because the
+  # release job holds `contents: write`, and `rhysd/actionlint` to a version so
+  # a green CI cannot turn red without a commit to explain it. That safety is
+  # worth nothing if nobody is told a newer version fixes a vulnerability —
+  # which is what this file is for.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci

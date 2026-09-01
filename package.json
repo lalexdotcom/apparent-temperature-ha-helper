@@ -8,7 +8,10 @@
 	},
 	"license": "MIT",
 	"scripts": {
-		"ha": "tsx scripts/ha-dev.ts"
+		"ha:up": "mkdir -p .ha/config && docker compose up -d",
+		"ha:down": "docker compose down",
+		"ha:logs": "docker compose logs -f homeassistant",
+		"ha:reset": "docker compose down && rm -rf .ha/config"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.11",

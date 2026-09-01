@@ -1,0 +1,46 @@
+name: Validate
+
+# The same two jobs CI runs on every push, on a schedule instead. There they
+# gate the release; here they answer a different question: does this
+# integration still validate against rules and a Home Assistant release that
+# moved on their own, under a repository nobody has touched? Neither hassfest
+# nor the HACS checks are pinned to a version, so a run that was green in
+# January can be red in March without a single commit. A nightly pass is how
+# that gets noticed before a user does.
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The manifest, the strings and the translations, checked by the same code
+      # that gates a core integration: required keys, the domain matching the
+      # directory, dependencies that exist, a valid iot_class and version.
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Not pinned to a SHA, unlike the release job's third-party action, and
+      # deliberately: `hacs/action` is a thin wrapper whose `runs.image` is
+      # `docker://ghcr.io/hacs/action:main`, so the code that actually executes
+      # is a moving tag whatever ref is written here. Pinning would buy the
+      # appearance of immutability and none of it. What makes that acceptable is
+      # the permission set above — this job can read the repository and nothing
+      # else, where the release job holds `contents: write`.
+      - uses: hacs/action@main
+        with:
+          category: integration
+          # The action's own default is to comment on the pull request, which
+          # needs `pull-requests: write`. The verdict is in the job log either
+          # way, so the narrower permission is worth more than the comment.
+          comment: "false"

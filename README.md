@@ -50,14 +50,82 @@ be converted, and will not appear.
 
 ## Install
 
-Add this repository to HACS as a custom repository, install it, restart Home
-Assistant, then go to **Settings → Devices & services → Helpers → Create helper
-→ Apparent temperature**.
+### Requirements
+
+**Home Assistant 2026.2.3 or newer.** HACS enforces this and will refuse to
+install on an older version.
+
+### HACS
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=lalexdotcom&repository=apparent-temperature-ha-helper&category=integration)
+
+This helper is **not** in the default HACS catalog, so it has to be added as a
+custom repository. The button above does exactly that: HACS asks you to
+confirm, adds the repository, and opens its page. From there:
+
+1. Choose **Download**.
+2. Restart Home Assistant.
+3. Go to **Settings → Devices & services → Helpers → Create helper →
+   Apparent temperature**.
+
+<details>
+<summary>If the button does not work</summary>
+
+HACS may not be installed yet, or your instance URL may not be registered with
+My Home Assistant. Add the repository by hand:
+
+1. Open **HACS** in Home Assistant.
+2. Open the **⋮** menu → **Custom repositories**.
+3. Repository: `lalexdotcom/apparent-temperature-ha-helper` — Type:
+   **Integration**.
+4. **Add**, then open **Apparent temperature** from the list and download it as
+   above.
+
+</details>
+
+<details>
+<summary>Manual install</summary>
+
+1. Download the source archive of the
+   [latest release](https://github.com/lalexdotcom/apparent-temperature-ha-helper/releases/latest).
+2. Copy `custom_components/apparent_temperature/` into your Home Assistant
+   `config/custom_components/` directory. Create `custom_components` if it does
+   not exist.
+3. Restart Home Assistant, then create the helper as above.
+
+Updates are on you from then on — HACS is what tracks releases.
+
+</details>
 
 ## Development
 
 ```bash
 uv sync
 .venv/bin/pytest
+.venv/bin/ruff format custom_components tests
 .venv/bin/ruff check custom_components tests
 ```
+
+A throwaway Home Assistant instance runs from the official image, with this
+repository's component and a seeded `configuration.yaml` mounted into it:
+
+```bash
+pnpm ha:up      # http://localhost:8123
+pnpm ha:logs
+pnpm ha:down
+pnpm ha:reset   # also throws away .ha/config — onboarding and helpers included
+```
+
+The seed lives in [`dev/configuration.yaml`](dev/configuration.yaml): sensors in
+mixed units, plus a weather entity in kelvin and knots, so the conversions are
+visible rather than theoretical. Everything Home Assistant writes stays in the
+gitignored `.ha/config/`, which survives a restart.
+
+## Releasing
+
+`custom_components/apparent_temperature/manifest.json` holds the version, and
+that is the whole trigger: add a section to [`CHANGELOG.md`](CHANGELOG.md), bump
+the manifest, push to `main`. Once CI is green, the release workflow tags
+`vX.Y.Z` and publishes the release, with the changelog section as its body and
+GitHub's generated notes underneath. A version that is already tagged is a
+no-op, so an ordinary push releases nothing.

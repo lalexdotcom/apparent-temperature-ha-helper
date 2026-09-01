@@ -27,10 +27,15 @@ Run the project's linter/formatter after every modification if one is configured
 
 ## Scripts
 
-Any script you need — one-off or reusable — goes in `scripts/`, written in
-TypeScript and run with `pnpm exec tsx scripts/<name>.ts`. No bash, no inline
-`node -e`. Until the project has its own `tsconfig.json`, rely on tsx's
-defaults rather than adding one.
+A script a human runs — a development helper, a one-off — goes in `scripts/`,
+written in TypeScript and run with `pnpm exec tsx scripts/<name>.ts`. No bash,
+no inline `node -e`. Until the project has its own `tsconfig.json`, rely on
+tsx's defaults rather than adding one.
+
+Logic a CI workflow runs is the exception: it stays inline in the job's `run:`
+block, in shell. Calling `scripts/` from a workflow would drag a whole Node
+toolchain into the job to execute a few lines, and actionlint already runs
+ShellCheck over every `run:` block.
 
 ## Tooling — Serena (symbol-aware MCP)
 

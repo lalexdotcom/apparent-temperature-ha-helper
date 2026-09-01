@@ -1,0 +1,58 @@
+# Seed configuration for the development instance, mounted read-only over
+# /config/configuration.yaml by docker-compose.yml. Versioned rather than
+# copied into the config directory once, so editing it here and restarting the
+# container is enough — nothing has to be thrown away for a change to land.
+#
+# The sensors are deliberately in mixed units: the helper has something to
+# select, and the conversion is visible rather than theoretical.
+default_config:
+
+logger:
+  default: info
+  logs:
+    custom_components.apparent_temperature: debug
+
+template:
+  - sensor:
+      - name: Dev temperature celsius
+        unique_id: dev_temperature_celsius
+        state: "18.4"
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+      - name: Dev temperature fahrenheit
+        unique_id: dev_temperature_fahrenheit
+        state: "68.0"
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+      - name: Dev humidity
+        unique_id: dev_humidity
+        state: "62"
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+      - name: Dev wind kmh
+        unique_id: dev_wind_kmh
+        state: "24"
+        unit_of_measurement: "km/h"
+        device_class: wind_speed
+        state_class: measurement
+      - name: Dev wind beaufort
+        unique_id: dev_wind_beaufort
+        state: "5"
+        unit_of_measurement: "Beaufort"
+        device_class: wind_speed
+        state_class: measurement
+  - weather:
+      - name: Dev weather
+        unique_id: dev_weather
+        condition: "sunny"
+        # Kelvin and knots: neither unit is used by the seeded sensors above,
+        # so the per-quantity weather fallback is visibly doing a conversion
+        # rather than coincidentally matching a group's own unit.
+        temperature: "293.15"
+        temperature_unit: "K"
+        humidity: "48"
+        wind_speed: "12"
+        wind_speed_unit: "kn"

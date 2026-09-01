@@ -1,0 +1,75 @@
+name: CI
+
+# `release.yml` hangs off this workflow's completion, so a branch missing from
+# this list cannot publish at all.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # First, because a broken workflow is the one defect the rest of this job
+      # cannot reveal. This project merges locally and pushes `main`, with no
+      # pull request in between, so a workflow file is first executed by GitHub
+      # at the very moment it publishes. `release.yml` hangs off this job's
+      # success, so a failure here means nothing is released — which is the
+      # right outcome, and the reason this belongs in CI rather than in a habit.
+      #
+      # YAML validity is the least of what it checks. It type-checks the
+      # `${{ }}` expressions — a typo in `steps.gate.outputs.release` yields an
+      # empty string, hence a condition silently always false and a step quietly
+      # skipped, with no error anywhere — and runs ShellCheck over every `run:`
+      # block. The tag is pinned because actionlint's rules move on their own,
+      # and a green CI must not turn red without a commit to explain it.
+      - name: Lint the workflows
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.12 -color
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      # pyproject.toml pins `python-preference = "only-managed"`, so this is the
+      # interpreter `uv sync` will build the environment on. Mirrors
+      # .devcontainer/post-create.sh.
+      - run: uv python install 3.13
+      # `--locked` rather than a plain sync: uv.lock is committed, and a lock
+      # that no longer matches pyproject.toml should fail here rather than be
+      # silently refreshed.
+      - run: uv sync --locked
+
+      - run: uv run ruff format --check custom_components tests
+      - run: uv run ruff check custom_components tests
+      - run: uv run pytest
+
+  # Both jobs are duplicated in validate.yml, deliberately. There they run on a
+  # schedule, to catch a rule or a Home Assistant release that moves under a
+  # repository nobody has touched. Here they gate the release: `release.yml`
+  # hangs off this workflow's conclusion, and a workflow is successful only when
+  # every one of its jobs is.
+  hassfest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      # The manifest, the strings and the translations, checked by the same code
+      # that gates a core integration.
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hacs/action@main
+        with:
+          category: integration
+          # The action's own default is to comment on the pull request, which
+          # needs `pull-requests: write`. The verdict is in the job log either
+          # way, so the narrower permission is worth more than the comment.
+          comment: "false"

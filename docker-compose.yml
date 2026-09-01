@@ -1,0 +1,22 @@
+services:
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:${HA_VERSION:-stable}
+    container_name: apparent-temperature-ha
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+    ports:
+      - "8123:8123"
+    restart: unless-stopped
+    volumes:
+      # Everything Home Assistant writes — onboarding account, .storage, the
+      # recorder database, the helpers created through the UI. Gitignored, and
+      # kept between runs so none of that has to be redone.
+      - ./.ha/config:/config
+      # The component itself, read-only and nested inside /config: the source of
+      # truth stays in the repository rather than a copy that silently goes
+      # stale. Home Assistant never writes there.
+      - ./custom_components/apparent_temperature:/config/custom_components/apparent_temperature:ro
+      # Read-only too, and for the same reason: the seed belongs to the
+      # repository. Home Assistant only creates a default configuration.yaml
+      # when /config has none, so mounting one keeps it from doing that.
+      - ./dev/configuration.yaml:/config/configuration.yaml:ro

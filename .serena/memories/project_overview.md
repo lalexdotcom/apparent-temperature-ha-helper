@@ -7,8 +7,8 @@ fallback.
 
 ## State as of 2026-09-01
 
-**Implemented and green.** Branch `feat/apparent-temperature-helper`, 20 commits
-off `main`, 65 tests passing, ruff and biome clean. Not merged yet.
+**Implemented and green, merged into `main`.** 65 tests passing, ruff and biome
+clean. Never released yet — the HACS packaging below lands `1.0.0`.
 
 - Spec: `docs/superpowers/specs/2026-08-31-apparent-temperature-helper-design.md`
 - Plan: `docs/superpowers/plans/2026-08-31-apparent-temperature-helper.md`
@@ -22,8 +22,53 @@ custom_components/apparent_temperature/
   __init__.py  const.py  config_flow.py  sensor.py
   sources.py   units.py  formulas.py
   manifest.json  strings.json  translations/{en,fr}.json
-tests/  hacs.json  scripts/ha-dev.ts
+tests/  dev/configuration.yaml  docker-compose.yml
+hacs.json  CHANGELOG.md  LICENSE  scripts/release-notes.ts
+.github/workflows/{ci,validate,release}.yml
 ```
+
+## Distribution (HACS)
+
+Set up 2026-09-01, mirroring `lalexdotcom/picture-studio-card`, whose three
+workflows are the reference whenever this side needs extending.
+
+- **The manifest's `version` is the release trigger.** No tag is ever pushed by
+  hand: `release.yml` hangs off a green `CI` on `main` (`workflow_run`), reads
+  `.version` from the manifest, exits as a no-op if `vX.Y.Z` is already tagged,
+  and otherwise publishes with `softprops/action-gh-release` pinned to a SHA.
+  The body is the matching `CHANGELOG.md` section — extracted by an inline awk
+  `run:` block that refuses an absent, empty or still `unreleased` section —
+  followed by GitHub's generated notes —
+  `generate_release_notes: true` appends to a body rather than replacing it.
+  So: write the changelog section, bump the manifest, push. First release is
+  `1.0.0`. The release job needs no Node at all — no pnpm install, no tsx.
+- **`scripts/` is for development and one-offs, not for CI.** Stated
+  2026-09-01 and now written into `AGENTS.md` § Scripts: logic a workflow runs
+  belongs inline in its `run:` block, in shell. `scripts/brand-icons.ts` is the
+  kind of thing that does belong there — a human runs it, and only when the
+  icon changes.
+- `ci.yml` lints the workflows first (`rhysd/actionlint` in Docker, pinned),
+  then `uv sync --locked`, ruff and pytest. Ruff is scoped to
+  `custom_components tests` on purpose: `ruff format` reformats the Python in
+  the Markdown under `docs/`, which must not be touched.
+- **hassfest and `hacs/action` run twice, on purpose.** In `ci.yml` they are
+  jobs, so a red one makes CI red and no release goes out — the only way to
+  gate it, since `workflow_run` with several `workflows:` fires on *either*,
+  never on both, and a chained `Validate` would lose the PR context and the
+  `event == 'push'` guard. In `validate.yml` the same two run on a nightly cron
+  (plus `workflow_dispatch`), which catches the rules and the Home Assistant
+  releases that move on their own under an untouched repository. Both carry
+  `permissions: contents: read`.
+- The `brands` check is satisfied locally: `scripts/brand-icons.ts` renders
+  `custom_components/apparent_temperature/brand/icon.png` (+ `@2x`) with
+  Playwright, from MDI's `thermometer-lines` split into three colourable
+  groups. Its `--preview` mode writes contact sheets to `.brand-preview/` for
+  picking a variant. Every geometry and colour decision is a named constant in
+  that file.
+- Not in the default HACS catalog: the README's install button is the
+  `my.home-assistant.io/redirect/hacs_repository/` badge, which adds the
+  repository as a custom one. Getting into the default catalog would also need
+  a description and topics on the GitHub repository itself.
 
 `formulas.py` and `units.py` are pure. `sources.py` is the only module importing
 `homeassistant.components.group` — it builds headless `SensorGroup` instances,
@@ -49,10 +94,14 @@ supply a temperature.
   `uv python install 3.13` — do not remove either.
 - `.venv/bin/pytest`, `.venv/bin/ruff format`, `.venv/bin/ruff check --fix`.
   Ruff is line-length 100, `select = E,F,W,I,UP,B,SIM,RUF`.
-- `pnpm run ha` boots Home Assistant from the **official Docker image** against
-  a throwaway `.ha-dev/`, component bind-mounted read-only, with seed sensors in
-  mixed units. `pnpm run ha -- --reset` starts from scratch. The venv holds
-  `homeassistant` only for the test suite; nothing launches `hass` from it.
+- `docker-compose.yml` boots Home Assistant from the **official Docker image**
+  against a gitignored `.ha/config/`, with two read-only binds nested in
+  `/config`: the component itself and `dev/configuration.yaml` (the seed —
+  sensors in mixed units plus a weather entity in K/kn). Because the seed is
+  mounted rather than copied once, editing it takes effect on the next start.
+  Scripts: `pnpm ha:up` / `ha:logs` / `ha:down`, and `ha:reset` (destructive —
+  drops `.ha/config`). The venv holds `homeassistant` only for the test suite;
+  nothing launches `hass` from it.
 - TypeScript is tooling only, in `scripts/`, run with tsx; biome formats it
   (tabs, width 100).
 
