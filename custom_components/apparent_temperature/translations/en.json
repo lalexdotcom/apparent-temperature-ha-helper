@@ -1,0 +1,123 @@
+{
+  "title": "Apparent temperature",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Apparent temperature",
+        "description": "Combine local sensors with a weather entity to compute a perceived temperature. Everything is optional: each quantity falls back to the weather entity on its own.",
+        "data": {
+          "name": "Name",
+          "weather_entity": "Weather entity",
+          "formula": "Formula"
+        },
+        "data_description": {
+          "weather_entity": "Used for any quantity no sensor group can provide.",
+          "formula": "How the perceived temperature is derived from temperature, humidity and wind."
+        },
+        "sections": {
+          "temperature": {
+            "name": "Temperature sensors",
+            "data": {
+              "entities": "Sensors",
+              "type": "Statistic characteristic",
+              "ignore_non_numeric": "Ignore non-numeric sensors"
+            },
+            "data_description": {
+              "ignore_non_numeric": "When off, a single unusable sensor makes the whole group fall back to the weather entity."
+            }
+          },
+          "humidity": {
+            "name": "Humidity sensors",
+            "data": {
+              "entities": "Sensors",
+              "type": "Statistic characteristic",
+              "ignore_non_numeric": "Ignore non-numeric sensors"
+            },
+            "data_description": {
+              "ignore_non_numeric": "When off, a single unusable sensor makes the whole group fall back to the weather entity."
+            }
+          },
+          "wind_speed": {
+            "name": "Wind speed sensors",
+            "data": {
+              "entities": "Sensors",
+              "type": "Statistic characteristic",
+              "ignore_non_numeric": "Ignore non-numeric sensors"
+            },
+            "data_description": {
+              "ignore_non_numeric": "When off, a single unusable sensor makes the whole group fall back to the weather entity."
+            }
+          }
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Apparent temperature",
+        "description": "Combine local sensors with a weather entity to compute a perceived temperature. Everything is optional: each quantity falls back to the weather entity on its own.",
+        "data": {
+          "weather_entity": "Weather entity",
+          "formula": "Formula"
+        },
+        "data_description": {
+          "weather_entity": "Used for any quantity no sensor group can provide.",
+          "formula": "How the perceived temperature is derived from temperature, humidity and wind."
+        },
+        "sections": {
+          "temperature": {
+            "name": "Temperature sensors",
+            "data": {
+              "entities": "Sensors",
+              "type": "Statistic characteristic",
+              "ignore_non_numeric": "Ignore non-numeric sensors"
+            },
+            "data_description": {
+              "ignore_non_numeric": "When off, a single unusable sensor makes the whole group fall back to the weather entity."
+            }
+          },
+          "humidity": {
+            "name": "Humidity sensors",
+            "data": {
+              "entities": "Sensors",
+              "type": "Statistic characteristic",
+              "ignore_non_numeric": "Ignore non-numeric sensors"
+            },
+            "data_description": {
+              "ignore_non_numeric": "When off, a single unusable sensor makes the whole group fall back to the weather entity."
+            }
+          },
+          "wind_speed": {
+            "name": "Wind speed sensors",
+            "data": {
+              "entities": "Sensors",
+              "type": "Statistic characteristic",
+              "ignore_non_numeric": "Ignore non-numeric sensors"
+            },
+            "data_description": {
+              "ignore_non_numeric": "When off, a single unusable sensor makes the whole group fall back to the weather entity."
+            }
+          }
+        }
+      }
+    }
+  },
+  "selector": {
+    "formula": {
+      "options": {
+        "thresholds": "Threshold indices (humidex / wind chill)",
+        "steadman": "Continuous formula (Steadman)"
+      }
+    },
+    "type": {
+      "options": {
+        "min": "Minimum",
+        "max": "Maximum",
+        "mean": "Arithmetic mean",
+        "median": "Median",
+        "last": "Most recently updated"
+      }
+    }
+  }
+}

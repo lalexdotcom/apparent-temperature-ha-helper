@@ -1,0 +1,123 @@
+{
+  "title": "Température ressentie",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Température ressentie",
+        "description": "Combine des capteurs locaux et une entité météo pour calculer une température ressentie. Tout est facultatif : chaque grandeur bascule seule sur l'entité météo.",
+        "data": {
+          "name": "Nom",
+          "weather_entity": "Entité météo",
+          "formula": "Formule"
+        },
+        "data_description": {
+          "weather_entity": "Utilisée pour toute grandeur qu'aucun groupe de capteurs ne fournit.",
+          "formula": "Comment la température ressentie est déduite de la température, de l'humidité et du vent."
+        },
+        "sections": {
+          "temperature": {
+            "name": "Capteurs de température",
+            "data": {
+              "entities": "Capteurs",
+              "type": "Caractéristique statistique",
+              "ignore_non_numeric": "Ignorer les capteurs non numériques"
+            },
+            "data_description": {
+              "ignore_non_numeric": "Désactivé, un seul capteur inexploitable fait basculer tout le groupe sur l'entité météo."
+            }
+          },
+          "humidity": {
+            "name": "Capteurs d'humidité",
+            "data": {
+              "entities": "Capteurs",
+              "type": "Caractéristique statistique",
+              "ignore_non_numeric": "Ignorer les capteurs non numériques"
+            },
+            "data_description": {
+              "ignore_non_numeric": "Désactivé, un seul capteur inexploitable fait basculer tout le groupe sur l'entité météo."
+            }
+          },
+          "wind_speed": {
+            "name": "Capteurs de vitesse du vent",
+            "data": {
+              "entities": "Capteurs",
+              "type": "Caractéristique statistique",
+              "ignore_non_numeric": "Ignorer les capteurs non numériques"
+            },
+            "data_description": {
+              "ignore_non_numeric": "Désactivé, un seul capteur inexploitable fait basculer tout le groupe sur l'entité météo."
+            }
+          }
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Température ressentie",
+        "description": "Combine des capteurs locaux et une entité météo pour calculer une température ressentie. Tout est facultatif : chaque grandeur bascule seule sur l'entité météo.",
+        "data": {
+          "weather_entity": "Entité météo",
+          "formula": "Formule"
+        },
+        "data_description": {
+          "weather_entity": "Utilisée pour toute grandeur qu'aucun groupe de capteurs ne fournit.",
+          "formula": "Comment la température ressentie est déduite de la température, de l'humidité et du vent."
+        },
+        "sections": {
+          "temperature": {
+            "name": "Capteurs de température",
+            "data": {
+              "entities": "Capteurs",
+              "type": "Caractéristique statistique",
+              "ignore_non_numeric": "Ignorer les capteurs non numériques"
+            },
+            "data_description": {
+              "ignore_non_numeric": "Désactivé, un seul capteur inexploitable fait basculer tout le groupe sur l'entité météo."
+            }
+          },
+          "humidity": {
+            "name": "Capteurs d'humidité",
+            "data": {
+              "entities": "Capteurs",
+              "type": "Caractéristique statistique",
+              "ignore_non_numeric": "Ignorer les capteurs non numériques"
+            },
+            "data_description": {
+              "ignore_non_numeric": "Désactivé, un seul capteur inexploitable fait basculer tout le groupe sur l'entité météo."
+            }
+          },
+          "wind_speed": {
+            "name": "Capteurs de vitesse du vent",
+            "data": {
+              "entities": "Capteurs",
+              "type": "Caractéristique statistique",
+              "ignore_non_numeric": "Ignorer les capteurs non numériques"
+            },
+            "data_description": {
+              "ignore_non_numeric": "Désactivé, un seul capteur inexploitable fait basculer tout le groupe sur l'entité météo."
+            }
+          }
+        }
+      }
+    }
+  },
+  "selector": {
+    "formula": {
+      "options": {
+        "thresholds": "Indices par seuils (humidex / refroidissement éolien)",
+        "steadman": "Formule continue (Steadman)"
+      }
+    },
+    "type": {
+      "options": {
+        "min": "Minimum",
+        "max": "Maximum",
+        "mean": "Moyenne arithmétique",
+        "median": "Médiane",
+        "last": "Dernière valeur reçue"
+      }
+    }
+  }
+}
