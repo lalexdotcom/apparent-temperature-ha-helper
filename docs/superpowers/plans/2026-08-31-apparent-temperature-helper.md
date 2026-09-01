@@ -2511,7 +2511,6 @@ git commit -m "Document the apparent temperature helper"
 ```
 
 ---
-
 ### Task 9: A runnable Home Assistant instance
 
 Depends on Task 7 — before the sensor platform exists there is nothing to look
@@ -2524,13 +2523,17 @@ at. It does not depend on Task 8.
 
 **Interfaces:**
 - Consumes: the finished integration in `custom_components/apparent_temperature/`.
-- Produces: `pnpm run ha`, which boots Home Assistant on http://localhost:8123
-  with this repository's component linked in. Nothing imports it.
+- Produces: `pnpm run ha`, which boots the official Home Assistant container on
+  http://localhost:8123 with this repository's component mounted in. Nothing
+  imports it.
 
-`AGENTS.md` requires scripts to be TypeScript run with tsx, which is why this is
-not a shell script. Home Assistant itself comes from the venv:
-`pytest-homeassistant-custom-component` pulls in `homeassistant`, which installs
-a `hass` entry point at `.venv/bin/hass`.
+The running instance is the **official Docker image**, not the venv. The
+devcontainer already has docker-in-docker. The venv keeps `homeassistant` only
+because `pytest-homeassistant-custom-component` needs it to run the test suite;
+nothing launches `hass` from it.
+
+`AGENTS.md` requires scripts to be TypeScript run with tsx, which is why the
+launcher is not a shell script.
 
 - [ ] **Step 1: Ignore the throwaway config directory**
 
@@ -2546,29 +2549,30 @@ Append to `.gitignore`:
 
 ```ts
 /**
- * Launch a throwaway Home Assistant instance with this repository's custom
- * component linked into it.
+ * Launch a throwaway Home Assistant instance from the official image, with
+ * this repository's custom component mounted into it.
  *
- *   pnpm run ha            reuse .ha-dev/, keeping whatever was configured
- *   pnpm run ha -- --reset start from an empty config directory
+ *   pnpm run ha             reuse .ha-dev/, keeping whatever was configured
+ *   pnpm run ha -- --reset  start from an empty config directory
  *
  * The config directory is deliberately reused between runs: helpers created
  * through the UI, and the onboarding account, survive a restart. Only --reset
  * throws that away.
+ *
+ * HA_VERSION overrides the image tag (default: stable).
  */
-import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const configDir = join(repoRoot, ".ha-dev");
-const componentLink = join(configDir, "custom_components", "apparent_temperature");
 const componentSource = join(repoRoot, "custom_components", "apparent_temperature");
-const hass = join(repoRoot, ".venv", "bin", "hass");
+const image = `ghcr.io/home-assistant/home-assistant:${process.env.HA_VERSION ?? "stable"}`;
 
-// A symlink rather than a copy: edits to the component show up on the next
-// Home Assistant restart without re-running this script.
+// Seed sensors, deliberately in mixed units, so the helper has something to
+// select and the unit conversion is visible rather than theoretical.
 const CONFIGURATION = `default_config:
 
 logger:
@@ -2576,20 +2580,18 @@ logger:
   logs:
     custom_components.apparent_temperature: debug
 
-# Seed sensors, deliberately in mixed units, so the helper has something to
-# select and the unit conversion is visible rather than theoretical.
 template:
   - sensor:
       - name: Dev temperature celsius
         unique_id: dev_temperature_celsius
         state: "18.4"
-        unit_of_measurement: "\\u00b0C"
+        unit_of_measurement: "°C"
         device_class: temperature
         state_class: measurement
       - name: Dev temperature fahrenheit
         unique_id: dev_temperature_fahrenheit
         state: "68.0"
-        unit_of_measurement: "\\u00b0F"
+        unit_of_measurement: "°F"
         device_class: temperature
         state_class: measurement
       - name: Dev humidity
@@ -2612,8 +2614,8 @@ template:
         state_class: measurement
 `;
 
-if (!existsSync(hass)) {
-	console.error("No Home Assistant in .venv. Run `uv sync` first.");
+if (spawnSync("docker", ["info"], { stdio: "ignore" }).status !== 0) {
+	console.error("Docker is not reachable. The devcontainer's docker-in-docker feature provides it.");
 	process.exit(1);
 }
 if (!existsSync(componentSource)) {
@@ -2626,26 +2628,34 @@ if (process.argv.includes("--reset") && existsSync(configDir)) {
 	console.log("Reset .ha-dev/");
 }
 
-mkdirSync(dirname(componentLink), { recursive: true });
-if (!existsSync(componentLink)) {
-	symlinkSync(componentSource, componentLink, "dir");
-}
-
+mkdirSync(configDir, { recursive: true });
 const configurationYaml = join(configDir, "configuration.yaml");
 if (!existsSync(configurationYaml)) {
 	writeFileSync(configurationYaml, CONFIGURATION);
 }
 
-console.log("Home Assistant starting on http://localhost:8123");
+console.log(`Home Assistant (${image}) starting on http://localhost:8123`);
 console.log("Settings > Devices & services > Helpers > Create helper > Apparent temperature");
+console.log("Ctrl-C stops it; --rm means the container leaves nothing behind.");
 
-const child = spawn(hass, ["--config", configDir], { stdio: "inherit" });
+// The component is a second, read-only bind nested inside /config: Home
+// Assistant never writes there, and mounting it separately keeps the source of
+// truth in the repository rather than a copy that silently goes stale.
+const child = spawn(
+	"docker",
+	[
+		"run", "--rm", "-it",
+		"--name", "apparent-temperature-ha-dev",
+		"-p", "8123:8123",
+		"-e", `TZ=${process.env.TZ ?? "Europe/Paris"}`,
+		"-v", `${configDir}:/config`,
+		"-v", `${componentSource}:/config/custom_components/apparent_temperature:ro`,
+		image,
+	],
+	{ stdio: "inherit" },
+);
 child.on("exit", (code) => process.exit(code ?? 0));
 ```
-
-Note on the unit strings: the degree signs are written as `°` escapes
-inside the template literal so the file stays pure ASCII, which keeps the YAML
-readable whatever the terminal encoding.
 
 - [ ] **Step 3: Add the package script**
 
@@ -2660,21 +2670,20 @@ In `package.json`, add a `scripts` block (the file has none yet):
 - [ ] **Step 4: Verify it boots**
 
 Run: `pnpm run ha`
-Expected: Home Assistant logs start, `http://localhost:8123` answers, and after
-onboarding the helper appears under **Settings → Devices & services → Helpers →
-Create helper** as "Apparent temperature". Create one against
-`sensor.dev_temperature_celsius` and `sensor.dev_humidity` and check the state
-appears. Stop with Ctrl-C.
+Expected: the image is pulled on first run, Home Assistant logs start, and
+`http://localhost:8123` answers. After onboarding, the helper appears under
+**Settings → Devices & services → Helpers → Create helper** as "Apparent
+temperature". Create one against `sensor.dev_temperature_celsius` and
+`sensor.dev_humidity` and check the state appears. Stop with Ctrl-C.
 
-If Home Assistant refuses to start on a missing dependency of the seeded
-template sensors, remove the `template:` block from `.ha-dev/configuration.yaml`
-and re-run — the helper itself needs none of it.
+If Home Assistant refuses to start on the seeded template sensors, remove the
+`template:` block from `.ha-dev/configuration.yaml` and re-run — the helper
+itself needs none of it.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-.venv/bin/ruff format custom_components tests
 pnpm exec biome check --write scripts package.json
 git add scripts/ha-dev.ts package.json .gitignore
-git commit -m "Add a runnable Home Assistant dev instance"
+git commit -m "Add a dockerised Home Assistant dev instance"
 ```
