@@ -1,7 +1,7 @@
 [project]
 name = "apparent-temperature-ha-helper"
 version = "0.0.1"
-description = "To be replaced by the description of the project"
+description = "Home Assistant helper computing a perceived temperature from sensor groups and a weather entity"
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "Alexandre LEGOUT", email = "" }]
