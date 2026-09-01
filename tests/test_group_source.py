@@ -190,6 +190,29 @@ async def test_ignore_non_numeric_true_keeps_the_valid_member(
     assert resolver.resolve().temperature.value == pytest.approx(10.0)
 
 
+async def test_a_section_without_the_flag_ignores_non_numeric_members(
+    hass: HomeAssistant,
+) -> None:
+    # Options written before the flag existed must read the same way as the
+    # config flow's default, or the two would disagree silently.
+    _set_temperature(hass, "sensor.a", 10.0, UnitOfTemperature.CELSIUS)
+    _set_temperature(hass, "sensor.b", "unknown", UnitOfTemperature.CELSIUS)
+
+    resolver = InputResolver(
+        hass,
+        _options(
+            **{
+                SECTION_TEMPERATURE: {
+                    CONF_ENTITIES: ["sensor.a", "sensor.b"],
+                    CONF_TYPE: "mean",
+                }
+            }
+        ),
+    )
+
+    assert resolver.resolve().temperature.value == pytest.approx(10.0)
+
+
 async def test_weather_takes_over_per_quantity(hass: HomeAssistant) -> None:
     # The temperature group works; humidity has no group at all. Only humidity
     # falls back.

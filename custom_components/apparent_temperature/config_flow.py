@@ -19,6 +19,7 @@ from .const import (
     CONF_FORMULA,
     CONF_IGNORE_NON_NUMERIC,
     CONF_WEATHER_ENTITY,
+    DEFAULT_IGNORE_NON_NUMERIC,
     DEFAULT_STATISTIC,
     DOMAIN,
     FORMULA_MODES,
@@ -51,7 +52,9 @@ def _group_schema(device_class: SensorDeviceClass) -> vol.Schema:
                     mode=selector.SelectSelectorMode.DROPDOWN,
                 )
             ),
-            vol.Required(CONF_IGNORE_NON_NUMERIC, default=False): selector.BooleanSelector(),
+            vol.Required(
+                CONF_IGNORE_NON_NUMERIC, default=DEFAULT_IGNORE_NON_NUMERIC
+            ): selector.BooleanSelector(),
         }
     )
 

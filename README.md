@@ -24,9 +24,10 @@ When a formula needs a quantity that is not available, the helper reports the
 air temperature and says so in its `formula` attribute.
 
 The helper itself reports `unavailable` when no source — group or weather
-fallback — can supply a temperature. With `ignore_non_numeric` off, a single
-unusable member drops that whole group to the weather fallback rather than
-excluding just that member.
+fallback — can supply a temperature. `ignore_non_numeric` is on by default, so
+an unusable member is skipped and the rest of the group still aggregates; switch
+it off for a group and a single unusable member drops the whole group to the
+weather fallback instead.
 
 ## Attributes
 
@@ -35,11 +36,23 @@ excluding just that member.
 | `index_value` | The raw number the formula produced, unconverted |
 | `formula` | `humidex`, `wind_chill`, `steadman` or `air_temperature` |
 | `temperature`, `humidity`, `wind_speed` | The values used, in °C / % / km/h |
-| `temperature_source`, `humidity_source`, `wind_speed_source` | `group`, `weather` or `null` |
 
 The state carries `device_class: temperature`, so Home Assistant converts it for
 display according to your unit system. Humidex and wind chill are indices rather
 than true temperatures, which is why `index_value` keeps the unconverted number.
+
+## Measurement entities
+
+Besides the perceived temperature, the helper registers one entity per quantity
+it consumes — temperature, humidity and wind speed — each publishing the value
+that actually fed the formula, in °C / % / km/h, with a `source` attribute
+reading `group` or `weather`. A quantity no source can supply is `unavailable`.
+
+They are **disabled by default**: enable the ones you want in the helper's page.
+Being real entities, they are recorded and get long-term statistics, which the
+attributes above never had — but only from the moment you enable them.
+
+All four entities are grouped under a device named after the helper.
 
 ## Units
 
