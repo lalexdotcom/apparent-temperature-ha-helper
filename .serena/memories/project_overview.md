@@ -10,8 +10,10 @@ fallback.
 **Implemented and green, merged into `main`.** 75 tests passing, ruff and biome
 clean.
 
-**`1.1.0` is merged into local `main` but not pushed** — the user pushes
-themselves. The manifest carries `1.1.0`, so their push releases it.
+**`1.1.0` was pushed to `main` on 2026-09-01** by the user — they push, the
+agent does not. The manifest carried `1.1.0`, so the release chain should have
+tagged and published `v1.1.0`; nobody checked from this side, because the
+devcontainer has no `gh` CLI. Verify on GitHub before assuming it went out.
 
 **`v1.0.0` is published.** The HACS packaging below landed as `4ecae90` on
 `main` on 2026-09-01, and the chain ran end to end on its own: CI green, then
