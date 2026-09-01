@@ -7,8 +7,22 @@ with `write_memory`, read with `list_memories` / `read_memory`. Do not build a
 parallel store under `CLAUDE_CONFIG_DIR`; the only thing left there is a
 one-line signpost in `MEMORY.md` pointing back here, because the harness
 auto-loads that file at session start and does not auto-read Serena memories.
+`AGENTS.md` now carries the same rule, and `.serena/memories/` is versioned
+with the project.
 
 Related: `mem:project_overview`.
+
+## Feature branches, never worktrees
+
+Standing rule, stated 2026-09-01: work always happens on a `feat/...` branch in
+the main checkout. Do not create git worktrees, and do not ask again — when a
+skill calls for an isolated workspace, cut the branch and move on.
+
+It also happens to be the right call here: a worktree would sit in a gitignored
+directory, and `.serena/project.yml` has `ignore_all_files_in_gitignore: true`,
+so Serena's symbolic tools — which `AGENTS.md` makes primary for code — would
+be blind to every file created there. The `.venv` and `node_modules` of the
+main checkout keep working too.
 
 ## Verify Home Assistant APIs against core source
 
