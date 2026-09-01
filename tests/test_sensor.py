@@ -172,3 +172,28 @@ async def test_reloads_when_options_change(hass: HomeAssistant) -> None:
     await hass.async_block_till_done()
 
     assert hass.states.get("sensor.garden_feel").attributes["formula"] == "steadman"
+
+
+async def test_survives_a_zero_percent_humidity_reading(hass: HomeAssistant) -> None:
+    # A humidity of 0 % used to reach math.log(0 / 100) and raise, which core
+    # would swallow while leaving the sensor's last good value in place. It
+    # must instead degrade to the air temperature and stay live.
+    _sensor(hass, "sensor.t", 30.0, UnitOfTemperature.CELSIUS)
+    hass.states.async_set(
+        "sensor.h",
+        "0",
+        {"device_class": "humidity", "unit_of_measurement": "%"},
+    )
+
+    await _setup(
+        hass,
+        **{
+            SECTION_TEMPERATURE: _section(["sensor.t"]),
+            SECTION_HUMIDITY: _section(["sensor.h"]),
+        },
+    )
+    state = hass.states.get("sensor.garden_feel")
+
+    assert state.state != STATE_UNAVAILABLE
+    assert float(state.state) == pytest.approx(30.0)
+    assert state.attributes["formula"] == "air_temperature"

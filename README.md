@@ -23,6 +23,11 @@ the anemometer does not cost you the local thermometer.
 When a formula needs a quantity that is not available, the helper reports the
 air temperature and says so in its `formula` attribute.
 
+The helper itself reports `unavailable` when no source — group or weather
+fallback — can supply a temperature. With `ignore_non_numeric` off, a single
+unusable member drops that whole group to the weather fallback rather than
+excluding just that member.
+
 ## Attributes
 
 | Attribute | Meaning |

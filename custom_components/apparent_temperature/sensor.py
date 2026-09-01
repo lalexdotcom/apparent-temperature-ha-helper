@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -18,6 +19,8 @@ from homeassistant.helpers.event import async_track_state_change_event
 from .const import CONF_FORMULA
 from .formulas import compute
 from .sources import InputResolver
+
+_LOGGER = logging.getLogger(__name__)
 
 ATTR_INDEX_VALUE = "index_value"
 ATTR_FORMULA = "formula"
@@ -80,19 +83,28 @@ class ApparentTemperatureSensor(SensorEntity):
 
         if inputs.temperature.value is None:
             # Without a temperature there is nothing to derive anything from.
+            # The sensor stays unavailable, and Entity only merges
+            # extra_state_attributes into the state when available, so there
+            # is no point assembling formula/index_value attributes here.
             self._attr_available = False
             self._attr_native_value = None
-            attributes[ATTR_FORMULA] = None
-            attributes[ATTR_INDEX_VALUE] = None
-            self._attr_extra_state_attributes = attributes
             return
 
-        result = compute(
-            self._mode,
-            inputs.temperature.value,
-            inputs.humidity.value,
-            inputs.wind_speed.value,
-        )
+        try:
+            result = compute(
+                self._mode,
+                inputs.temperature.value,
+                inputs.humidity.value,
+                inputs.wind_speed.value,
+            )
+        except Exception:
+            # A formula fault must not freeze the sensor on its last good
+            # value: go visibly unavailable instead of silently going stale.
+            _LOGGER.exception("Failed to compute the apparent temperature")
+            self._attr_available = False
+            self._attr_native_value = None
+            return
+
         self._attr_available = True
         self._attr_native_value = result.value
         # The state is converted for display by Home Assistant; index_value

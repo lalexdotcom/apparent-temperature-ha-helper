@@ -89,6 +89,14 @@ def compute(
     When a formula needs a quantity that could not be resolved, the air
     temperature is returned instead and the caller can see that in `formula`.
     """
+    # A humidity outside (0, 100] is a broken sensor, not a valid reading (a
+    # dead DHT-family sensor commonly reports 0 %). Treat it as unresolved,
+    # same as None: degrading to the air temperature tells the truth, whereas
+    # clamping it would feed math.log() with 0 (a domain error) or invent a
+    # plausible-looking humidex from garbage.
+    if humidity_pct is not None and not (0 < humidity_pct <= 100):
+        humidity_pct = None
+
     if mode == FORMULA_THRESHOLDS:
         if temperature_c > HUMIDEX_MIN_TEMPERATURE and humidity_pct is not None:
             return FormulaResult(humidex(temperature_c, humidity_pct), RESULT_HUMIDEX)

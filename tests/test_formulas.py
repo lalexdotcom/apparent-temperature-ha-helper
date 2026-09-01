@@ -110,3 +110,21 @@ def test_steadman_mode_degrades_when_any_input_is_missing() -> None:
 def test_steadman_mode_ignores_the_thresholds() -> None:
     result = compute(FORMULA_STEADMAN, 12.0, 70.0, 5.0)
     assert result.formula == RESULT_STEADMAN
+
+
+@pytest.mark.parametrize("bad_humidity", [0.0, -5.0, 150.0])
+def test_thresholds_degrades_on_out_of_range_humidity(bad_humidity: float) -> None:
+    # A humidity of 0 % (or any value outside (0, 100]) is a broken sensor,
+    # not a dry day: it must not reach math.log() and must not be treated as
+    # a valid reading. 30 °C is above the humidex threshold and above the
+    # wind chill threshold, so only the humidity guard is under test here.
+    result = compute(FORMULA_THRESHOLDS, 30.0, bad_humidity, None)
+    assert result.formula == RESULT_AIR_TEMPERATURE
+    assert result.value == 30.0
+
+
+@pytest.mark.parametrize("bad_humidity", [0.0, -5.0, 150.0])
+def test_steadman_degrades_on_out_of_range_humidity(bad_humidity: float) -> None:
+    result = compute(FORMULA_STEADMAN, 30.0, bad_humidity, 10.0)
+    assert result.formula == RESULT_AIR_TEMPERATURE
+    assert result.value == 30.0
