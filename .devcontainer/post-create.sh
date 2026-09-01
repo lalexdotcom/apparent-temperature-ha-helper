@@ -48,6 +48,14 @@ if [ "$(npm pkg get packageManager)" = "{}" ]; then
 	npm pkg set "packageManager=pnpm@$(pnpm --version)"
 fi
 
+# homeassistant pins lru-dict==1.3.0, which has no cp313 wheel, so it is
+# built from source; this image's system Python ships no headers
+# (python3.13-dev is absent and unreachable without root). uv's managed
+# CPython bundles them, and pyproject.toml's `python-preference =
+# "only-managed"` makes uv use it for `.venv` regardless of what's on PATH,
+# so it has to exist before `uv sync` runs.
+uv python install 3.13
+
 # The Python side of the same deal: creates .venv from pyproject.toml and the
 # `dev` dependency group. `--frozen` would need a committed uv.lock; there is
 # one from the first sync onwards, and uv refreshes it here when it drifts.
