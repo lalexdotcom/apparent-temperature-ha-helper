@@ -1,0 +1,12 @@
+{
+  "domain": "apparent_temperature",
+  "name": "Apparent temperature",
+  "codeowners": ["@lalexdotcom"],
+  "config_flow": true,
+  "dependencies": ["group"],
+  "documentation": "https://github.com/lalexdotcom/apparent-temperature-ha-helper",
+  "integration_type": "helper",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/lalexdotcom/apparent-temperature-ha-helper/issues",
+  "version": "0.1.0"
+}
