@@ -62,6 +62,18 @@ template:
         unit_of_measurement: "Beaufort"
         device_class: wind_speed
         state_class: measurement
+  - weather:
+      - name: Dev weather
+        unique_id: dev_weather
+        condition: "sunny"
+        # Kelvin and knots: neither unit is used by the seeded sensors above,
+        # so the per-quantity weather fallback is visibly doing a conversion
+        # rather than coincidentally matching a group's own unit.
+        temperature: "293.15"
+        temperature_unit: "K"
+        humidity: "48"
+        wind_speed: "12"
+        wind_speed_unit: "kn"
 `;
 
 if (spawnSync("docker", ["info"], { stdio: "ignore" }).status !== 0) {

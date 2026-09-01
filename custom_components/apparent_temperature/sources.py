@@ -1,7 +1,10 @@
 """Resolving each quantity from the state machine.
 
 The only module that talks to Home Assistant's state machine, and the only one
-allowed to import from homeassistant.components.
+allowed to import from homeassistant.components.group.sensor — another
+integration's private internals. The sensor platform's own public base API
+(homeassistant.components.sensor) is fair game for sensor.py and
+config_flow.py too.
 """
 
 from __future__ import annotations
