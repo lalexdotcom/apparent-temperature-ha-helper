@@ -151,7 +151,6 @@ CONF_IGNORE_NON_NUMERIC: Final = "ignore_non_numeric"
 SECTION_TEMPERATURE: Final = "temperature"
 SECTION_HUMIDITY: Final = "humidity"
 SECTION_WIND_SPEED: Final = "wind_speed"
-SECTIONS: Final = (SECTION_TEMPERATURE, SECTION_HUMIDITY, SECTION_WIND_SPEED)
 
 # Formula modes offered by the config flow.
 FORMULA_THRESHOLDS: Final = "thresholds"
@@ -913,7 +912,7 @@ git commit -m "Read weather entity quantities in canonical units"
 - Test: `tests/test_ha_internals.py`
 
 **Interfaces:**
-- Consumes: `WeatherReading`, `read_weather` from Task 4; `SECTIONS`, `CONF_IGNORE_NON_NUMERIC`, `DEFAULT_STATISTIC` from `const.py`.
+- Consumes: `WeatherReading`, `read_weather` from Task 4; `SECTION_TEMPERATURE`, `SECTION_HUMIDITY`, `SECTION_WIND_SPEED`, `CONF_IGNORE_NON_NUMERIC`, `CONF_WEATHER_ENTITY`, `DEFAULT_STATISTIC`, `DOMAIN` from `const.py`.
 - Produces:
   - `SOURCE_GROUP = "group"`, `SOURCE_WEATHER = "weather"`
   - `Quantity(value: float | None, source: str | None)` — frozen dataclass.
