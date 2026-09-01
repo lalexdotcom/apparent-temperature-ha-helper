@@ -97,8 +97,11 @@ async def test_options_flow_updates_the_formula(hass: HomeAssistant) -> None:
 
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert entry.options[CONF_FORMULA] == FORMULA_STEADMAN
-    # The name is not part of the options flow and must survive it.
-    assert entry.title == "Garden"
+    # The name is not part of the options flow's schema but must survive the
+    # merge: sensor.py subscripts entry.options[CONF_NAME] unguarded, so a
+    # dropped key would raise KeyError during the reload below.
+    assert entry.options[CONF_NAME] == "Garden"
+    assert hass.states.get("sensor.garden") is not None
 
 
 async def test_translations_cover_every_flow_key() -> None:

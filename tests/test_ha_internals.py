@@ -12,8 +12,9 @@ import inspect
 import pytest
 from homeassistant.components.group.sensor import SensorGroup
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import STATE_UNAVAILABLE, UnitOfTemperature
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 
 
 def test_constructor_signature_is_unchanged() -> None:
@@ -98,3 +99,41 @@ async def test_update_works_without_being_added_to_hass(
     group.async_update_group_state()
 
     assert group.native_value is None
+    # A headless group has no entity_id (None), so an issue keyed on it would
+    # be "None_...": core opening one would mean every headless group in
+    # every helper instance collides on the same repair issue.
+    registry = ir.async_get(hass)
+    assert not any("None_" in issue_id for _domain, issue_id in registry.issues)
+
+
+async def test_available_is_false_when_every_member_is_unavailable(
+    hass: HomeAssistant,
+) -> None:
+    """_Group.value() treats availability as the signal to fall through.
+
+    Only the available-True case was pinned before; this pins the False case
+    that sources.py actually depends on.
+    """
+    hass.states.async_set(
+        "sensor.gone",
+        STATE_UNAVAILABLE,
+        {
+            "device_class": "temperature",
+            "unit_of_measurement": UnitOfTemperature.CELSIUS,
+        },
+    )
+
+    group = SensorGroup(
+        hass,
+        None,
+        "pin",
+        ["sensor.gone"],
+        False,
+        "mean",
+        UnitOfTemperature.CELSIUS,
+        SensorStateClass.MEASUREMENT,
+        SensorDeviceClass.TEMPERATURE,
+    )
+    group.async_update_group_state()
+
+    assert group.available is False
