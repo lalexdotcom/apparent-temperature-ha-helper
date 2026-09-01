@@ -19,7 +19,7 @@ jobs:
   hassfest:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The manifest, the strings and the translations, checked by the same code
       # that gates a core integration: required keys, the domain matching the
       # directory, dependencies that exist, a valid iot_class and version.
@@ -28,7 +28,7 @@ jobs:
   hacs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Not pinned to a SHA, unlike the release job's third-party action, and
       # deliberately: `hacs/action` is a thin wrapper whose `runs.image` is
