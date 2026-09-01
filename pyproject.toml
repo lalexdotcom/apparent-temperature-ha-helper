@@ -34,6 +34,13 @@ target-version = "py313"
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF"]
 
+# Serena's Pyright runs outside the project venv and reported every
+# homeassistant.* import unresolved, which made get_diagnostics_for_file
+# useless here. Pointing it at .venv fixes that; nothing else reads this table.
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
