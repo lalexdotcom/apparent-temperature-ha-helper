@@ -84,6 +84,10 @@ mkdirSync(configDir, { recursive: true });
 const configurationYaml = join(configDir, "configuration.yaml");
 if (!existsSync(configurationYaml)) {
 	writeFileSync(configurationYaml, CONFIGURATION);
+} else {
+	console.log(
+		"Reusing existing .ha-dev/configuration.yaml (seed changes need --reset to take effect)",
+	);
 }
 
 console.log(`Home Assistant (${image}) starting on http://localhost:8123`);
@@ -113,4 +117,8 @@ const child = spawn(
 	],
 	{ stdio: "inherit" },
 );
+child.on("error", (err) => {
+	console.error(`Failed to launch docker: ${err.message}`);
+	process.exit(1);
+});
 child.on("exit", (code) => process.exit(code ?? 0));
