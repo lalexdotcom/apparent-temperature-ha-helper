@@ -7,8 +7,11 @@ fallback.
 
 ## State as of 2026-09-01
 
-**Implemented and green, merged into `main`.** 65 tests passing, ruff and biome
+**Implemented and green, merged into `main`.** 75 tests passing, ruff and biome
 clean.
+
+**`1.1.0` is merged into local `main` but not pushed** — the user pushes
+themselves. The manifest carries `1.1.0`, so their push releases it.
 
 **`v1.0.0` is published.** The HACS packaging below landed as `4ecae90` on
 `main` on 2026-09-01, and the chain ran end to end on its own: CI green, then
@@ -96,6 +99,33 @@ every member to °C / % / km/h *before* aggregation and what stops core opening
 repair issues keyed on an `entity_id` these groups do not have.
 `tests/test_ha_internals.py` pins all of that against core.
 
+## 1.1.0 — one entity per measured quantity
+
+Designed and built 2026-09-01, bounded path (no spec, no plan document).
+
+- `sensor.py` now sets up four entities per entry. `SourceHub` owns the single
+  `InputResolver`, subscribes once to every source, re-resolves on each change
+  and hands the same `ResolvedInputs` to every entity — four entities each
+  resolving on their own would mean twelve group aggregations per state change.
+- `SourceMeasurementSensor` publishes one quantity in its canonical unit with a
+  `source` attribute (`group` / `weather`), driven by a `SensorEntityDescription`
+  per section in `MEASUREMENTS`. **Registered disabled** (`entity_registry_
+  enabled_default=False`) — the user's call, and it only takes effect at first
+  registration, so it cannot be revisited for existing installs.
+- All four hang off a `DeviceInfo(identifiers={(DOMAIN, entry_id)},
+  entry_type=SERVICE)` named after the helper. That device is what lets
+  `has_entity_name` + `translation_key` compose and translate the names; the
+  main sensor takes `name = None`, so its displayed name is the device's, i.e.
+  exactly what it was before. Its `unique_id` never changed, so entity id and
+  history survive.
+- **Breaking, minor:** the `*_source` attributes left the main sensor for the
+  measurement entities. The user chose 1.1.0 with a BREAKING changelog note
+  over 2.0.0, calling the break anecdotal.
+- `DEFAULT_IGNORE_NON_NUMERIC = True` in `const.py` is read by both the config
+  flow schema and `sources.py`'s fallback — they disagreed silently otherwise.
+  Existing entries keep their stored value; only new helpers start from it.
+- No config-entry migration: the options schema is untouched, `version` stays 1.
+
 ## Choosing a statistic, for two sensors in sun and shade
 
 Worked out with the user on 2026-09-01, for their own house: one temperature +
@@ -154,3 +184,4 @@ supply a temperature.
 - Serena's symbolic tools are primary for code; built-in Read/Edit only for
   Markdown, JSON, YAML and other non-code. See `mem:serena_language_servers`.
 - Feature branches, never worktrees — `mem:working_with_this_user`.
+- Next up: `mem:planned_statistics_backfill`, deferred to 1.2.
