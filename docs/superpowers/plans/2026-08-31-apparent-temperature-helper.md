@@ -2509,3 +2509,172 @@ Expected: PASS, every test green.
 git add README.md package.json pyproject.toml
 git commit -m "Document the apparent temperature helper"
 ```
+
+---
+
+### Task 9: A runnable Home Assistant instance
+
+Depends on Task 7 — before the sensor platform exists there is nothing to look
+at. It does not depend on Task 8.
+
+**Files:**
+- Create: `scripts/ha-dev.ts`
+- Modify: `package.json` (add the `ha` script)
+- Modify: `.gitignore` (ignore the throwaway config directory)
+
+**Interfaces:**
+- Consumes: the finished integration in `custom_components/apparent_temperature/`.
+- Produces: `pnpm run ha`, which boots Home Assistant on http://localhost:8123
+  with this repository's component linked in. Nothing imports it.
+
+`AGENTS.md` requires scripts to be TypeScript run with tsx, which is why this is
+not a shell script. Home Assistant itself comes from the venv:
+`pytest-homeassistant-custom-component` pulls in `homeassistant`, which installs
+a `hass` entry point at `.venv/bin/hass`.
+
+- [ ] **Step 1: Ignore the throwaway config directory**
+
+Append to `.gitignore`:
+
+```
+.ha-dev/
+```
+
+- [ ] **Step 2: Write the launcher**
+
+`scripts/ha-dev.ts`:
+
+```ts
+/**
+ * Launch a throwaway Home Assistant instance with this repository's custom
+ * component linked into it.
+ *
+ *   pnpm run ha            reuse .ha-dev/, keeping whatever was configured
+ *   pnpm run ha -- --reset start from an empty config directory
+ *
+ * The config directory is deliberately reused between runs: helpers created
+ * through the UI, and the onboarding account, survive a restart. Only --reset
+ * throws that away.
+ */
+import { spawn } from "node:child_process";
+import { existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const configDir = join(repoRoot, ".ha-dev");
+const componentLink = join(configDir, "custom_components", "apparent_temperature");
+const componentSource = join(repoRoot, "custom_components", "apparent_temperature");
+const hass = join(repoRoot, ".venv", "bin", "hass");
+
+// A symlink rather than a copy: edits to the component show up on the next
+// Home Assistant restart without re-running this script.
+const CONFIGURATION = `default_config:
+
+logger:
+  default: info
+  logs:
+    custom_components.apparent_temperature: debug
+
+# Seed sensors, deliberately in mixed units, so the helper has something to
+# select and the unit conversion is visible rather than theoretical.
+template:
+  - sensor:
+      - name: Dev temperature celsius
+        unique_id: dev_temperature_celsius
+        state: "18.4"
+        unit_of_measurement: "\\u00b0C"
+        device_class: temperature
+        state_class: measurement
+      - name: Dev temperature fahrenheit
+        unique_id: dev_temperature_fahrenheit
+        state: "68.0"
+        unit_of_measurement: "\\u00b0F"
+        device_class: temperature
+        state_class: measurement
+      - name: Dev humidity
+        unique_id: dev_humidity
+        state: "62"
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+      - name: Dev wind kmh
+        unique_id: dev_wind_kmh
+        state: "24"
+        unit_of_measurement: "km/h"
+        device_class: wind_speed
+        state_class: measurement
+      - name: Dev wind beaufort
+        unique_id: dev_wind_beaufort
+        state: "5"
+        unit_of_measurement: "Beaufort"
+        device_class: wind_speed
+        state_class: measurement
+`;
+
+if (!existsSync(hass)) {
+	console.error("No Home Assistant in .venv. Run `uv sync` first.");
+	process.exit(1);
+}
+if (!existsSync(componentSource)) {
+	console.error(`No component at ${componentSource}.`);
+	process.exit(1);
+}
+
+if (process.argv.includes("--reset") && existsSync(configDir)) {
+	rmSync(configDir, { recursive: true, force: true });
+	console.log("Reset .ha-dev/");
+}
+
+mkdirSync(dirname(componentLink), { recursive: true });
+if (!existsSync(componentLink)) {
+	symlinkSync(componentSource, componentLink, "dir");
+}
+
+const configurationYaml = join(configDir, "configuration.yaml");
+if (!existsSync(configurationYaml)) {
+	writeFileSync(configurationYaml, CONFIGURATION);
+}
+
+console.log("Home Assistant starting on http://localhost:8123");
+console.log("Settings > Devices & services > Helpers > Create helper > Apparent temperature");
+
+const child = spawn(hass, ["--config", configDir], { stdio: "inherit" });
+child.on("exit", (code) => process.exit(code ?? 0));
+```
+
+Note on the unit strings: the degree signs are written as `°` escapes
+inside the template literal so the file stays pure ASCII, which keeps the YAML
+readable whatever the terminal encoding.
+
+- [ ] **Step 3: Add the package script**
+
+In `package.json`, add a `scripts` block (the file has none yet):
+
+```json
+"scripts": {
+    "ha": "tsx scripts/ha-dev.ts"
+}
+```
+
+- [ ] **Step 4: Verify it boots**
+
+Run: `pnpm run ha`
+Expected: Home Assistant logs start, `http://localhost:8123` answers, and after
+onboarding the helper appears under **Settings → Devices & services → Helpers →
+Create helper** as "Apparent temperature". Create one against
+`sensor.dev_temperature_celsius` and `sensor.dev_humidity` and check the state
+appears. Stop with Ctrl-C.
+
+If Home Assistant refuses to start on a missing dependency of the seeded
+template sensors, remove the `template:` block from `.ha-dev/configuration.yaml`
+and re-run — the helper itself needs none of it.
+
+- [ ] **Step 5: Commit**
+
+```bash
+.venv/bin/ruff format custom_components tests
+pnpm exec biome check --write scripts package.json
+git add scripts/ha-dev.ts package.json .gitignore
+git commit -m "Add a runnable Home Assistant dev instance"
+```
