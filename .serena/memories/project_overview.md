@@ -8,7 +8,16 @@ fallback.
 ## State as of 2026-09-01
 
 **Implemented and green, merged into `main`.** 65 tests passing, ruff and biome
-clean. Never released yet — the HACS packaging below lands `1.0.0`.
+clean.
+
+**`v1.0.0` is published.** The HACS packaging below landed as `4ecae90` on
+`main` on 2026-09-01, and the chain ran end to end on its own: CI green, then
+`Release` tagged `v1.0.0` and published it. The three `Release` runs marked
+*skipped* on the same commit are the expected no-ops — every CI completion
+triggers the workflow, and the job's `if` declines all but the right one.
+
+Dependabot is live too: a pull request bumping `astral-sh/setup-uv` from 6 to
+7 was open with CI green at the end of that session.
 
 - Spec: `docs/superpowers/specs/2026-08-31-apparent-temperature-helper-design.md`
 - Plan: `docs/superpowers/plans/2026-08-31-apparent-temperature-helper.md`
@@ -22,9 +31,10 @@ custom_components/apparent_temperature/
   __init__.py  const.py  config_flow.py  sensor.py
   sources.py   units.py  formulas.py
   manifest.json  strings.json  translations/{en,fr}.json
+  brand/{icon.png,icon@2x.png}
 tests/  dev/configuration.yaml  docker-compose.yml
-hacs.json  CHANGELOG.md  LICENSE  scripts/release-notes.ts
-.github/workflows/{ci,validate,release}.yml
+hacs.json  CHANGELOG.md  LICENSE  scripts/brand-icons.ts
+.github/dependabot.yml  .github/workflows/{ci,validate,release}.yml
 ```
 
 ## Distribution (HACS)
@@ -67,8 +77,15 @@ workflows are the reference whenever this side needs extending.
   that file.
 - Not in the default HACS catalog: the README's install button is the
   `my.home-assistant.io/redirect/hacs_repository/` badge, which adds the
-  repository as a custom one. Getting into the default catalog would also need
-  a description and topics on the GitHub repository itself.
+  repository as a custom one.
+- **The GitHub repository's description and topics are load-bearing, not
+  cosmetic.** `hacs/action` runs `description.py` and `topics.py`, which fail
+  on an empty one — and since that action is a CI job, an empty description
+  would mean no release. Both were filled in on 2026-09-01. Should the default
+  catalog ever be wanted, the `hacs/default` pull request template asks for
+  links to a successful HACS run and a successful hassfest run (a link to one
+  *job* inside a larger workflow is fine), with no `ignore` key on the action,
+  and a release created after those runs went green.
 
 `formulas.py` and `units.py` are pure. `sources.py` is the only module importing
 `homeassistant.components.group` — it builds headless `SensorGroup` instances,
@@ -78,6 +95,28 @@ return early instead of negotiating from the members, which is what converts
 every member to °C / % / km/h *before* aggregation and what stops core opening
 repair issues keyed on an `entity_id` these groups do not have.
 `tests/test_ha_internals.py` pins all of that against core.
+
+## Choosing a statistic, for two sensors in sun and shade
+
+Worked out with the user on 2026-09-01, for their own house: one temperature +
+humidity sensor per side. **Minimum on temperature, maximum on humidity.** Both
+pick the same sensor — the shaded one — and they follow the sun through the
+day, east in the morning, west in the afternoon.
+
+The reason they agree: a sun-struck sensor is heated by radiation, so it reads
+a temperature that is too high. Relative humidity is a ratio against what the
+air could hold at that temperature, and the air on both sides holds the same
+vapour, so the same sensor also reads a relative humidity that is too *low* —
+28 °C / 60 % in the shade is about 40 % on a sensor baked to 35 °C. Mean or
+minimum on humidity would pair a shaded temperature with a humidity measured at
+another one, understating the vapour, hence the humidex, which rests on nothing
+else.
+
+It holds only while the divergence comes from insolation: two genuinely
+different microclimates (a watered bed against a paved terrace) would make the
+maximum pick the damper air for the wrong reason. And maximum has minimum's
+symmetric flaw — a sensor drifting upwards or saturating at 99 % wins silently,
+forever. Not written in the README.
 
 Two formula modes: threshold indices (humidex above 15 °C, wind chill below
 10 °C, air temperature between — what Météo-France publishes) and a continuous
