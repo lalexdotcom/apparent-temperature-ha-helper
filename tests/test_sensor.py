@@ -122,10 +122,11 @@ async def test_exposes_the_inputs_it_computed_from(hass: HomeAssistant) -> None:
     assert attributes["temperature"] == pytest.approx(5.0)
     assert attributes["wind_speed"] == pytest.approx(20.0)
     assert attributes["humidity"] is None
-    # Which source fed a quantity now lives on the measurement entity.
-    assert "temperature_source" not in attributes
-    assert "wind_speed_source" not in attributes
-    assert "humidity_source" not in attributes
+    # Also on the main sensor, so that reading which source fed a quantity
+    # never requires enabling the measurement entities.
+    assert attributes["temperature_source"] == "group"
+    assert attributes["wind_speed_source"] == "weather"
+    assert attributes["humidity_source"] is None
     # The raw index, unconverted: humidex and wind chill are not temperatures.
     assert attributes["index_value"] == pytest.approx(
         float(hass.states.get("sensor.garden_feel").state)

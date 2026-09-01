@@ -118,9 +118,14 @@ Designed and built 2026-09-01, bounded path (no spec, no plan document).
   main sensor takes `name = None`, so its displayed name is the device's, i.e.
   exactly what it was before. Its `unique_id` never changed, so entity id and
   history survive.
-- **Breaking, minor:** the `*_source` attributes left the main sensor for the
-  measurement entities. The user chose 1.1.0 with a BREAKING changelog note
-  over 2.0.0, calling the break anecdotal.
+- **The main sensor keeps every attribute**, `*_source` included. Removing them
+  was decided, implemented, then reversed by the user on 2026-09-01 for one
+  reason: the measurement entities are disabled by default, so dropping the
+  attributes would have made the inputs unreadable until the user enabled
+  something. 1.1.0 is therefore purely additive — no BREAKING note. The
+  redundancy between attributes and entities is accepted, and the entities earn
+  their place by being recorded rather than by being the only way to read a
+  value.
 - `DEFAULT_IGNORE_NON_NUMERIC = True` in `const.py` is read by both the config
   flow schema and `sources.py`'s fallback — they disagreed silently otherwise.
   Existing entries keep their stored value; only new helpers start from it.

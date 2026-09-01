@@ -178,10 +178,16 @@ class ApparentTemperatureSensor(SensorEntity):
     def _recalculate(self) -> None:
         """Apply the formula to the hub's inputs, publish the attributes."""
         inputs = self._hub.inputs
+        # The measurement entities carry the same three quantities, but they
+        # are registered disabled: keeping the attributes here is what makes
+        # the inputs readable without enabling anything.
         attributes: dict[str, Any] = {
             SECTION_TEMPERATURE: inputs.temperature.value,
+            f"{SECTION_TEMPERATURE}_{ATTR_SOURCE}": inputs.temperature.source,
             SECTION_HUMIDITY: inputs.humidity.value,
+            f"{SECTION_HUMIDITY}_{ATTR_SOURCE}": inputs.humidity.source,
             SECTION_WIND_SPEED: inputs.wind_speed.value,
+            f"{SECTION_WIND_SPEED}_{ATTR_SOURCE}": inputs.wind_speed.source,
         }
 
         if inputs.temperature.value is None:

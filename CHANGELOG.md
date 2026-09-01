@@ -20,11 +20,6 @@
   no longer costs you the whole group; it is skipped and the others still
   aggregate. Existing helpers keep the value they were saved with — this only
   changes what a new one starts from.
-- **BREAKING (minor).** The `temperature_source`, `humidity_source` and
-  `wind_speed_source` attributes are gone from the main sensor; that
-  information now lives on the matching measurement entity. A template reading
-  them gets `None` instead of an error. The `temperature`, `humidity` and
-  `wind_speed` attributes are untouched.
 
 ## 1.0.0 — 2026-09-01
 

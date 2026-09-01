@@ -36,6 +36,7 @@ weather fallback instead.
 | `index_value` | The raw number the formula produced, unconverted |
 | `formula` | `humidex`, `wind_chill`, `steadman` or `air_temperature` |
 | `temperature`, `humidity`, `wind_speed` | The values used, in °C / % / km/h |
+| `temperature_source`, `humidity_source`, `wind_speed_source` | `group`, `weather` or `null` |
 
 The state carries `device_class: temperature`, so Home Assistant converts it for
 display according to your unit system. Humidex and wind chill are indices rather
@@ -49,8 +50,9 @@ that actually fed the formula, in °C / % / km/h, with a `source` attribute
 reading `group` or `weather`. A quantity no source can supply is `unavailable`.
 
 They are **disabled by default**: enable the ones you want in the helper's page.
-Being real entities, they are recorded and get long-term statistics, which the
-attributes above never had — but only from the moment you enable them.
+The attributes above carry the same values whether or not you do, so enable an
+entity when you want the thing an attribute cannot give you — a recorded
+history and long-term statistics, starting from the moment you enable it.
 
 All four entities are grouped under a device named after the helper.
 
