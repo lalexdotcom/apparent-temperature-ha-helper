@@ -24,6 +24,12 @@ so Serena's symbolic tools — which `AGENTS.md` makes primary for code — woul
 be blind to every file created there. The `.venv` and `node_modules` of the
 main checkout keep working too.
 
+## Merge feature branches with `--no-ff`
+
+Stated 2026-09-01: a merge commit is wanted, it is the normal superpowers
+workflow. Do not flatten to a fast-forward for the sake of a linear history,
+and do not offer to. The branch is deleted after the merge as usual.
+
 ## Verify Home Assistant APIs against core source
 
 When this user questions a Home Assistant API claim, fetch the current core
