@@ -191,4 +191,6 @@ supply a temperature.
 - Serena's symbolic tools are primary for code; built-in Read/Edit only for
   Markdown, JSON, YAML and other non-code. See `mem:serena_language_servers`.
 - Feature branches, never worktrees — `mem:working_with_this_user`.
-- Next up: `mem:planned_statistics_backfill`, deferred to 1.2.
+- Nothing planned for 1.2: the statistics backfill that was slated for it was
+  brainstormed and rejected on 2026-09-01 — see
+  `mem:statistics_backfill_rejected`.
