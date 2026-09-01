@@ -18,3 +18,5 @@ __pycache__/
 
 # Ledger and review packages of an in-flight plan; the git history is the record.
 .superpowers/
+
+.ha-dev/
