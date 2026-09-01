@@ -81,6 +81,27 @@ async def test_flow_accepts_an_empty_configuration(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
 
 
+async def test_non_numeric_sensors_are_ignored_by_default(hass: HomeAssistant) -> None:
+    # A group is more useful missing one broken member than falling back whole.
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER}
+    )
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"],
+        {
+            CONF_NAME: "Default",
+            CONF_FORMULA: FORMULA_THRESHOLDS,
+            SECTION_TEMPERATURE: {CONF_ENTITIES: [], CONF_TYPE: "mean"},
+            SECTION_HUMIDITY: {CONF_ENTITIES: [], CONF_TYPE: "mean"},
+            SECTION_WIND_SPEED: {CONF_ENTITIES: [], CONF_TYPE: "mean"},
+        },
+    )
+    await hass.async_block_till_done()
+
+    for sect in (SECTION_TEMPERATURE, SECTION_HUMIDITY, SECTION_WIND_SPEED):
+        assert result["options"][sect][CONF_IGNORE_NON_NUMERIC] is True
+
+
 async def test_options_flow_updates_the_formula(hass: HomeAssistant) -> None:
     entry = MockConfigEntry(domain=DOMAIN, options=USER_INPUT, title="Garden")
     entry.add_to_hass(hass)

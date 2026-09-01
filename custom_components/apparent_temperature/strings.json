@@ -119,5 +119,18 @@
         "last": "Most recently updated"
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Temperature"
+      },
+      "humidity": {
+        "name": "Humidity"
+      },
+      "wind_speed": {
+        "name": "Wind speed"
+      }
+    }
   }
 }

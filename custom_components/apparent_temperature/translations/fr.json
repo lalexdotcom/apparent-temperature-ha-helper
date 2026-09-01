@@ -119,5 +119,18 @@
         "last": "Dernière valeur reçue"
       }
     }
+  },
+  "entity": {
+    "sensor": {
+      "temperature": {
+        "name": "Température"
+      },
+      "humidity": {
+        "name": "Humidité"
+      },
+      "wind_speed": {
+        "name": "Vitesse du vent"
+      }
+    }
   }
 }

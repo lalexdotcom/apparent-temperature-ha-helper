@@ -30,6 +30,7 @@ from homeassistant.core import HomeAssistant, State
 from .const import (
     CONF_IGNORE_NON_NUMERIC,
     CONF_WEATHER_ENTITY,
+    DEFAULT_IGNORE_NON_NUMERIC,
     DEFAULT_STATISTIC,
     DOMAIN,
     SECTION_HUMIDITY,
@@ -128,7 +129,7 @@ class _Group:
             None,
             name,
             self.entity_ids,
-            config.get(CONF_IGNORE_NON_NUMERIC, False),
+            config.get(CONF_IGNORE_NON_NUMERIC, DEFAULT_IGNORE_NON_NUMERIC),
             config.get(CONF_TYPE, DEFAULT_STATISTIC),
             unit,
             SensorStateClass.MEASUREMENT,
@@ -161,6 +162,14 @@ class ResolvedInputs:
     temperature: Quantity
     humidity: Quantity
     wind_speed: Quantity
+
+    def quantity(self, section: str) -> Quantity:
+        """Return one input by the config-flow section that configures it."""
+        return {
+            SECTION_TEMPERATURE: self.temperature,
+            SECTION_HUMIDITY: self.humidity,
+            SECTION_WIND_SPEED: self.wind_speed,
+        }[section]
 
 
 class InputResolver:

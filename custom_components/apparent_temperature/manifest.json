@@ -8,5 +8,5 @@
   "integration_type": "helper",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/lalexdotcom/apparent-temperature-ha-helper/issues",
-  "version": "1.0.0"
+  "version": "1.1.0"
 }

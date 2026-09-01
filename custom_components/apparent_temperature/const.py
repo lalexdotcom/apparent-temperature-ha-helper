@@ -14,6 +14,11 @@ CONF_FORMULA: Final = "formula"
 # imported: SensorGroup reads it from a plain dict, so a second import of HA
 # internals would buy nothing.
 CONF_IGNORE_NON_NUMERIC: Final = "ignore_non_numeric"
+# Home Assistant's own group helper defaults this to off; we do not. A group
+# whose members can drop out one at a time — a battery sensor going unknown —
+# is more useful short of one member than fallen back to the weather entity
+# whole. The user can still switch it off per group.
+DEFAULT_IGNORE_NON_NUMERIC: Final = True
 
 # Collapsible sections of the config flow, and the keys their options nest under.
 SECTION_TEMPERATURE: Final = "temperature"
